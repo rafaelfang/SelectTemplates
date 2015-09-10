@@ -1,0 +1,7 @@
+{
+	"DBInfoLocation":"/home/lihongb/DATABASE/DBInfo/",
+	"inputFileLocation":"/home/cf797/test/testAlignment/",
+	"outputFileLocation":"/home/cf797/test/outputSelectTopAlignment/",
+	"proteinLocation": "/home/cf797/test/Proteins/"
+  
+}
