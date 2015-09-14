@@ -21,13 +21,16 @@ public:
 	void write2Json();
 	void setup3DCoords();
 	void calculateDistanceMatrix();
+	void calculateSimilarityMatrix();
+	float findSimilarity(vector<vector<float> >, int, int,
+			vector<vector<float> >, int, int);
 	void findLocalAlign();
 	void write2PDB();
 	void findGlobalAlign();
 	virtual ~BLAPDBImpl();
 private:
 	vector<BLAPDBResult> blaPDBResultVector;
-
+	vector<vector<float> > similarityMatrix;
 };
 
 #endif /* BLAPDBIMPL_H_ */
