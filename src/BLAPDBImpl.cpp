@@ -419,28 +419,127 @@ void BLAPDBImpl::setup3DCoords() {
 }
 void BLAPDBImpl::calculateSimilarityMatrix() {
 	//cout<<"similaritymatrix start"<<endl;
-	vector<vector<float> > theSimilarityMatrix;
+
 	int theSize = blaPDBResultVector.size();
-	theSimilarityMatrix.resize(theSize);
-	for (int i = 0; i < theSize; i++) {
-		theSimilarityMatrix[i].resize(theSize);
-	}
+	TwoDArray theSimilarityMatrix(theSize, theSize);
+
 	cout << "make space for similarity matrix:" << theSize << endl;
-	for (int i = 0; i < theSize; i++) {
+	for (int m = 0; m < theSize; m++) {
 
-		for (int j = 0; j < theSize; j++) {
-			vector<vector<float> > distMatrixA =
-					blaPDBResultVector[i].getDistMat();
-			int queryStartA = blaPDBResultVector[i].getQueryStart();
-			int queryEndA = blaPDBResultVector[i].getQueryEnd();
+		for (int n = 0; n < theSize; n++) {
+			TwoDArray distMatrixA = blaPDBResultVector[m].getDistMat();
+			int queryStartA = blaPDBResultVector[m].getQueryStart();
+			int queryEndA = blaPDBResultVector[m].getQueryEnd();
 
-			vector<vector<float> > distMatrixB =
-					blaPDBResultVector[j].getDistMat();
-			int queryStartB = blaPDBResultVector[j].getQueryStart();
-			int queryEndB = blaPDBResultVector[j].getQueryEnd();
+			TwoDArray distMatrixB = blaPDBResultVector[n].getDistMat();
+			int queryStartB = blaPDBResultVector[n].getQueryStart();
+			int queryEndB = blaPDBResultVector[n].getQueryEnd();
+			cout << "queryStartA " << queryStartA << "queryEndA " << queryEndA
+					<< endl;
+			cout << "queryStartB " << queryStartA << "queryEndB " << queryEndA
+					<< endl;
+			cout << endl;
 
-			theSimilarityMatrix[i][j] = findSimilarity(distMatrixA, queryStartA,
-					queryEndA, distMatrixB, queryStartB, queryEndB);
+			if (queryStartA <= queryStartB && queryStartB <= queryEndA
+					&& queryEndA <= queryEndB) {
+				cout << "case 1 begin" << endl;
+				int overlapLength = queryEndA - queryStartB + 1;
+
+				float temp1;
+				float temp2;
+				float rmsd;
+				cout << overlapLength << endl;
+				for (int i = 0; i < overlapLength; i++) {
+					cout << "here" << endl;
+					for (int j = 0; j < overlapLength; j++) {
+
+						cout << "x axix is " << (queryStartB - queryStartA + i)
+								<< endl;
+						temp1 = distMatrixA.returnArrayValue(
+								queryStartB - queryStartA + i,
+								queryStartB - queryStartA + j);
+
+						temp2 = distMatrixB.returnArrayValue(i, j);
+						cout << "temp1 " << temp1 << "temp2 " << temp2;
+						rmsd += (temp1 - temp2) * (temp1 - temp2);
+					}
+					cout << endl;
+
+				}
+
+				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
+				cout << "case 1 " << rmsd << endl;
+				theSimilarityMatrix.setArrayValue(m, n, rmsd);
+			} else if (queryStartA <= queryStartB && queryStartB <= queryEndB
+					&& queryEndB <= queryEndA) {
+				int overlapLength = queryEndB - queryStartB + 1;
+				float temp1;
+				float temp2;
+				float rmsd;
+				for (int i = 0; i < overlapLength; i++) {
+
+					for (int j = 0; j < overlapLength; j++) {
+
+						temp1 = distMatrixA.returnArrayValue(
+								queryStartB - queryStartA + i,
+								queryStartB - queryStartA + j);
+						temp2 = distMatrixB.returnArrayValue(i, j);
+						rmsd += (temp1 - temp2) * (temp1 - temp2);
+					}
+
+				}
+
+				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
+				cout << "case 2 " << rmsd << endl;
+				theSimilarityMatrix.setArrayValue(m, n, rmsd);
+			} else if (queryStartB <= queryStartA && queryStartA <= queryEndB
+					&& queryEndB <= queryEndA) {
+				int overlapLength = queryEndB - queryStartA + 1;
+				float temp1;
+				float temp2;
+				float rmsd;
+				for (int i = 0; i < overlapLength; i++) {
+
+					for (int j = 0; j < overlapLength; j++) {
+
+						temp1 = distMatrixA.returnArrayValue(
+								queryStartA - queryStartB + i,
+								queryStartA - queryStartB + j);
+						temp2 = distMatrixB[i][j];
+						rmsd += (temp1 - temp2) * (temp1 - temp2);
+					}
+
+				}
+
+				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
+				cout << "case 3 " << rmsd << endl;
+				theSimilarityMatrix.setArrayValue(m, n, rmsd);
+			} else if (queryStartB <= queryStartA && queryStartA <= queryEndA
+					&& queryEndA <= queryEndB) {
+				int overlapLength = queryEndA - queryStartA + 1;
+				float temp1;
+				float temp2;
+				float rmsd;
+				for (int i = 0; i < overlapLength; i++) {
+
+					for (int j = 0; j < overlapLength; j++) {
+
+						temp1 = distMatrixA.returnArrayValue(
+								queryStartA - queryStartB + i,
+								queryStartA - queryStartB + j);
+						temp2 = distMatrixB[i][j];
+						rmsd += (temp1 - temp2) * (temp1 - temp2);
+					}
+
+				}
+
+				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
+				cout << "case 4 " << rmsd << endl;
+				theSimilarityMatrix.setArrayValue(m, n, rmsd);
+			} else {
+				cout << "case 5 " << 0.0 << endl;
+				theSimilarityMatrix.setArrayValue(m, n, 0.0);//no overlapping between the two distance Matrix
+			}
 
 		}
 
@@ -455,111 +554,16 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 
 	ofstream outSimilarityMatFile((char*) proteinSimilarityMatFilename.c_str(),
 			ios::out);
-	theSize = theSimilarityMatrix.size();
+	theSize = theSimilarityMatrix.getRow();
 	for (int i = 0; i < theSize; i++) {
 
 		for (int j = 0; j < theSize; j++) {
-			outSimilarityMatFile << " " << theSimilarityMatrix[i][j] << " ";
+			outSimilarityMatFile << " " << theSimilarityMatrix.returnArrayValue(i,j) << " ";
 		}
 		outSimilarityMatFile << "\n";
 	}
 	outSimilarityMatFile << "\n";
 	outSimilarityMatFile.close();
-
-}
-float BLAPDBImpl::findSimilarity(vector<vector<float> > distMatrixA,
-		int queryStartA, int queryEndA, vector<vector<float> > distMatrixB,
-		int queryStartB, int queryEndB) {
-
-	if (queryStartA <= queryStartB && queryStartB <= queryEndA
-			&& queryEndA <= queryEndB) {
-
-		int overlapLength = queryEndA - queryStartB + 1;
-		float temp1;
-		float temp2;
-		float rmsd;
-		for (int i = 0; i < overlapLength; i++) {
-
-			for (int j = 0; j < overlapLength; j++) {
-
-				temp1 = distMatrixA[queryStartB - queryStartA + i][queryStartB
-						- queryStartA + j];
-				temp2 = distMatrixB[i][j];
-				rmsd += (temp1 - temp2) * (temp1 - temp2);
-			}
-
-		}
-
-		rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-		cout<<"case 1 "<<rmsd<<endl;
-		return rmsd;
-	} else if (queryStartA <= queryStartB && queryStartB <= queryEndB
-			&& queryEndB <= queryEndA) {
-		int overlapLength = queryEndB - queryStartB + 1;
-		float temp1;
-		float temp2;
-		float rmsd;
-		for (int i = 0; i < overlapLength; i++) {
-
-			for (int j = 0; j < overlapLength; j++) {
-
-				temp1 = distMatrixA[queryStartB - queryStartA + i][queryStartB
-						- queryStartA + j];
-				temp2 = distMatrixB[i][j];
-				rmsd += (temp1 - temp2) * (temp1 - temp2);
-			}
-
-		}
-
-		rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-		cout<<"case 2 "<<rmsd<<endl;
-		return rmsd;
-	} else if (queryStartB <= queryStartA && queryStartA <= queryEndB
-			&& queryEndB <= queryEndA) {
-		int overlapLength = queryEndB - queryStartA + 1;
-		float temp1;
-		float temp2;
-		float rmsd;
-		for (int i = 0; i < overlapLength; i++) {
-
-			for (int j = 0; j < overlapLength; j++) {
-
-				temp1 = distMatrixA[queryStartA - queryStartB + i][queryStartA
-						- queryStartB + j];
-				temp2 = distMatrixB[i][j];
-				rmsd += (temp1 - temp2) * (temp1 - temp2);
-			}
-
-		}
-
-		rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-		cout<<"case 3 "<<rmsd<<endl;
-		return rmsd;
-	} else if (queryStartB <= queryStartA && queryStartA <= queryEndA
-			&& queryEndA <= queryEndB) {
-		int overlapLength = queryEndA - queryStartA + 1;
-		float temp1;
-		float temp2;
-		float rmsd;
-		for (int i = 0; i < overlapLength; i++) {
-
-			for (int j = 0; j < overlapLength; j++) {
-
-				temp1 = distMatrixA[queryStartA - queryStartB + i][queryStartA
-						- queryStartB + j];
-				temp2 = distMatrixB[i][j];
-				rmsd += (temp1 - temp2) * (temp1 - temp2);
-			}
-
-		}
-
-		rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-		cout<<"case 4 "<<rmsd<<endl;
-		return rmsd;
-	} else {
-		cout<<"case 5 "<<0.0<<endl;
-		return 0.0;	//no overlapping between the two distance Matrix
-	}
 
 }
 
@@ -569,19 +573,17 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 		vector<float> Xs = blaPDBResultVector[k].getXCoords();
 		vector<float> Ys = blaPDBResultVector[k].getYCoords();
 		vector<float> Zs = blaPDBResultVector[k].getZCoords();
-		vector<vector<float> > distMatrix;
+
 		int theSize = Xs.size();
-		distMatrix.resize(theSize);
-		for (int i = 0; i < theSize; i++) {
-			distMatrix[i].resize(theSize);
-		}
+		TwoDArray distMatrix(theSize, theSize);
+
 		for (int i = 0; i < theSize; i++) {
 			Point A(Xs[i], Ys[i], Zs[i]);
 
 			for (int j = 0; j < theSize; j++) {
 				Point B(Xs[j], Ys[j], Zs[j]);
 
-				distMatrix[i][j] = findDistance(A, B); // Add an element (column) to the row
+				distMatrix.setArrayValue(i, j, findDistance(A, B)); // Add an element (column) to the row
 			}
 
 		}
@@ -599,15 +601,15 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 		proteinDistMatFilename += "_";
 		proteinDistMatFilename += blaPDBResultVector[k].getQuery();
 		proteinDistMatFilename += ".txt";
-		vector<vector<float> > distanceMatrix =
-				blaPDBResultVector[k].getDistMat();
+		TwoDArray distanceMatrix = blaPDBResultVector[k].getDistMat();
 		ofstream outDistMatFile((char*) proteinDistMatFilename.c_str(),
 				ios::out);
-		int theSize = distanceMatrix.size();
-		for (int i = 0; i < theSize; i++) {
 
-			for (int j = 0; j < theSize; j++) {
-				outDistMatFile << " " << distanceMatrix[i][j] << " ";
+		for (int i = 0; i < distanceMatrix.getRow(); i++) {
+
+			for (int j = 0; j < distanceMatrix.getRow(); j++) {
+				outDistMatFile << " " << distanceMatrix.returnArrayValue(i, j)
+						<< " ";
 			}
 			outDistMatFile << "\n";
 		}
