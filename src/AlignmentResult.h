@@ -8,7 +8,6 @@
 #ifndef ALIGNMENTRESULT_H_
 #define ALIGNMENTRESULT_H_
 
-#include <string>
 #include <vector>
 
 using namespace std;
@@ -25,8 +24,8 @@ public:
 	void setZCoords(vector<float>& coords);
 	vector<char>& getTemplateSeq();
 	void setTemplateSeq(vector<char>& templateSeq);
-	vector<vector<float> >& getDistMat();
-	void setDistMat(vector<vector<float> >& distMat);
+	TwoDArray& getDistMat();
+	void setDistMat(TwoDArray& distMat);
 
 protected:
 
@@ -35,7 +34,7 @@ protected:
 	vector<float> ZCoords;
 	vector<char> templateSeq;
 
-	vector<vector<float> > distMat;
+	TwoDArray distMat;
 };
 
 #endif /* ALIGNMENTRESULT_H_ */
