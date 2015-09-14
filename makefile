@@ -1,8 +1,11 @@
-selectTopTemplate: jsoncpp.o AlignmentResult.o Point.o BLAPDBImpl.o BLAPDBResult.o Driver.o UtilityInterface.o 
-	g++ jsoncpp.o AlignmentResult.o Point.o BLAPDBImpl.o BLAPDBResult.o Driver.o UtilityInterface.o  -o selectTopTemplate
+selectTopTemplate: jsoncpp.o TwoDArray.o AlignmentResult.o Point.o BLAPDBImpl.o BLAPDBResult.o Driver.o UtilityInterface.o 
+	g++ jsoncpp.o TwoDArray.o AlignmentResult.o Point.o BLAPDBImpl.o BLAPDBResult.o Driver.o UtilityInterface.o  -o selectTopTemplate
 
 jsoncpp.o: jsoncpp.cpp
 	g++ -c jsoncpp.cpp
+	
+TwoDArray.o:TwoDArray.cpp
+	g++ -c TwoDArray.cpp
 	
 AlignmentResult.o: AlignmentResult.cpp
 	g++ -c AlignmentResult.cpp
