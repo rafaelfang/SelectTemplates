@@ -24,8 +24,8 @@ public:
 	void setZCoords(vector<float>& coords);
 	vector<char>& getTemplateSeq();
 	void setTemplateSeq(vector<char>& templateSeq);
-	TwoDArray& getDistMat();
-	void setDistMat(TwoDArray& distMat);
+	vector<vector<float> >& getDistMat();
+	void setDistMat(vector<vector<float> >& distMat);
 
 protected:
 
@@ -34,7 +34,7 @@ protected:
 	vector<float> ZCoords;
 	vector<char> templateSeq;
 
-	TwoDArray distMat;
+	vector<vector<float> > distMat;
 };
 
 #endif /* ALIGNMENTRESULT_H_ */

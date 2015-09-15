@@ -46,10 +46,10 @@ void AlignmentResult::setTemplateSeq(vector<char>& templateSeq) {
 	this->templateSeq = templateSeq;
 }
 
-TwoDArray& AlignmentResult::getDistMat() {
+vector<vector<float> >& AlignmentResult::getDistMat() {
 	return distMat;
 }
 
-void AlignmentResult::setDistMat(TwoDArray& distMat) {
+void AlignmentResult::setDistMat(vector<vector<float> >& distMat) {
 	this->distMat = distMat;
 }
