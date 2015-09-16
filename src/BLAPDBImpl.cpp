@@ -443,7 +443,22 @@ float** BLAPDBImpl::loadDistanceMatrix(string fileName) {
 			array2D[i][j] = arr[i * row + j];
 		}
 	}
+	displayDistMat(array2D,row);
 	return array2D;
+
+}
+
+void BLAPDBImpl::displayDistMat(float** distMat, int row) {
+	cout<<"distMat is"<<endl;
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < row; j++) {
+			cout<<" "<<distMat[i][j]<<" ";
+		}
+		cout<<endl;
+	}
+	cout<<endl;
+	cout<<endl;
+	cout<<endl;
 
 }
 void BLAPDBImpl::calculateSimilarityMatrix() {
@@ -457,25 +472,26 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 	distanceMatFilename += rootName;
 	distanceMatFilename += "/BLAPDB/distanceMatrix/protein";
 	for (int m = 0; m < theSize; m++) {
+		stringstream ss1;
+		ss1 << m;
+		string distanceMatFilenameA = distanceMatFilename + ss1.str();
+		distanceMatFilenameA += ".txt";
+		cout << "distanceMatFilenameA is " << distanceMatFilenameA << endl;
+		float** distMatrixA = loadDistanceMatrix(distanceMatFilenameA.c_str());
+
 
 		for (int n = 0; n < theSize; n++) {
-			stringstream ss1;
-			ss1 << m;
-			string distanceMatFilenameA = distanceMatFilename + ss1.str();
-			distanceMatFilenameA+=".txt";
-			cout<<"distanceMatFilenameA is "<<distanceMatFilenameA<<endl;
-			float** distMatrixA = loadDistanceMatrix(
-					distanceMatFilenameA.c_str());
 
 			stringstream ss2;
 			ss2 << n;
 
 			string distanceMatFilenameB = distanceMatFilename + ss2.str();
-			distanceMatFilenameB+=".txt";
-			cout<<"distanceMatFilenameB is "<<distanceMatFilenameB<<endl;
+			distanceMatFilenameB += ".txt";
+			cout << "distanceMatFilenameB is " << distanceMatFilenameB << endl;
 			float** distMatrixB = loadDistanceMatrix(
 					distanceMatFilenameB.c_str());
 
+			break;
 			int queryStartA = blaPDBResultVector[m].getQueryStart();
 			int queryEndA = blaPDBResultVector[m].getQueryEnd();
 
@@ -483,9 +499,9 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 			int queryEndB = blaPDBResultVector[n].getQueryEnd();
 			cout << "queryStartA " << queryStartA << "queryEndA " << queryEndA
 					<< endl;
-			cout << "queryStartB " << queryStartA << "queryEndB " << queryEndA
+			cout << "queryStartB " << queryStartB << "queryEndB " << queryEndB
 					<< endl;
-			cout << endl;
+
 
 			if (queryStartA <= queryStartB && queryStartB <= queryEndA
 					&& queryEndA <= queryEndB) {
@@ -495,30 +511,29 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 				float temp1;
 				float temp2;
 				float rmsd;
-				cout << overlapLength << endl;
+
 				for (int i = 0; i < overlapLength; i++) {
-					cout << "here" << endl;
+
 					for (int j = 0; j < overlapLength; j++) {
 
-						cout << "x axix is " << (queryStartB - queryStartA + i)
-								<< endl;
 						temp1 =
 								distMatrixA[queryStartB - queryStartA + i][queryStartB
 										- queryStartA + j];
 
 						temp2 = distMatrixB[i][j];
-						cout << "temp1 " << temp1 << "temp2 " << temp2;
+
 						rmsd += (temp1 - temp2) * (temp1 - temp2);
 					}
-					cout << endl;
+
 
 				}
 
 				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-				cout << "case 1 " << rmsd << endl;
+				cout << "case 1 rmsd is: " << rmsd << endl;
 				theSimilarityMatrix[m][n] = rmsd;
 			} else if (queryStartA <= queryStartB && queryStartB <= queryEndB
 					&& queryEndB <= queryEndA) {
+				cout << "case 2 begin" << endl;
 				int overlapLength = queryEndB - queryStartB + 1;
 				float temp1;
 				float temp2;
@@ -537,10 +552,11 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 				}
 
 				rmsd = sqrt(rmsd / (overlapLength * overlapLength));
-				cout << "case 2 " << rmsd << endl;
+				cout << "case 2 rmsd:" << rmsd << endl;
 				theSimilarityMatrix[m][n] = rmsd;
 			} else if (queryStartB <= queryStartA && queryStartA <= queryEndB
 					&& queryEndB <= queryEndA) {
+				cout << "case 3 begin" << endl;
 				int overlapLength = queryEndB - queryStartA + 1;
 				float temp1;
 				float temp2;
@@ -563,6 +579,7 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 				theSimilarityMatrix[m][n] = rmsd;
 			} else if (queryStartB <= queryStartA && queryStartA <= queryEndA
 					&& queryEndA <= queryEndB) {
+				cout << "case 4 begin " << endl;
 				int overlapLength = queryEndA - queryStartA + 1;
 				float temp1;
 				float temp2;
@@ -588,8 +605,10 @@ void BLAPDBImpl::calculateSimilarityMatrix() {
 				theSimilarityMatrix[m][n] = 0.0;//no overlapping between the two distance Matrix
 			}
 
-		}
+			free(distMatrixB);
 
+		}
+		free(distMatrixA);
 	}
 	cout << "write to files" << endl;
 	//write the similarity matrix into files for debugging
@@ -620,18 +639,22 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 		vector<float> Xs = blaPDBResultVector[k].getXCoords();
 		vector<float> Ys = blaPDBResultVector[k].getYCoords();
 		vector<float> Zs = blaPDBResultVector[k].getZCoords();
+		int subjectStart = blaPDBResultVector[k].getSubjectStart();
+		int subjectEnd = blaPDBResultVector[k].getSubjectEnd();
 
-		int theSize = Xs.size();
+		int theSize = subjectEnd - subjectStart + 1;
 		vector<vector<float> > distMatrix;
 		distMatrix.resize(theSize);
 		for (int i = 0; i < theSize; i++) {
 			distMatrix[i].resize(theSize);
 		}
 		for (int i = 0; i < theSize; i++) {
-			Point A(Xs[i], Ys[i], Zs[i]);
+			Point A(Xs[i + subjectStart - 1], Ys[i + subjectStart - 1],
+					Zs[i + subjectStart - 1]);
 
 			for (int j = 0; j < theSize; j++) {
-				Point B(Xs[j], Ys[j], Zs[j]);
+				Point B(Xs[j + subjectStart - 1], Ys[j + subjectStart - 1],
+						Zs[j + subjectStart - 1]);
 
 				distMatrix[i][j] = findDistance(A, B); // Add an element (column) to the row
 			}

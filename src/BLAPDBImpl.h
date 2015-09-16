@@ -23,8 +23,9 @@ public:
 	void setup3DCoords();
 	void calculateDistanceMatrix();
 	void calculateSimilarityMatrix();
-	string convertInt(int number);
-	float** loadDistanceMatrix(string fileName);
+	string convertInt(int);
+	float** loadDistanceMatrix(string);
+	void displayDistMat(float**, int);
 	void findLocalAlign();
 	void write2PDB();
 	void findGlobalAlign();
