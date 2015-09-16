@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 		blaPDBImpl.makeDirectory();
 		blaPDBImpl.write2Json();
 		blaPDBImpl.setup3DCoords();
-		//blaPDBImpl.calculateDistanceMatrix();
+		blaPDBImpl.calculateDistanceMatrix();
 		blaPDBImpl.calculateSimilarityMatrix();
 	}
 
