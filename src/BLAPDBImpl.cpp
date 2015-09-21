@@ -688,6 +688,7 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 	}
 
 	int similaritySize = blaPDBResultVector.size();
+
 	vector<vector<float> > similairtyMatrix;
 	similairtyMatrix.resize(similaritySize);
 	for (int i = 0; i < similaritySize; i++) {
@@ -704,30 +705,44 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 					blaPDBResultVector[j].getDistMat();
 			int queryBStart = blaPDBResultVector[j].getQueryStart();
 			int queryBEnd = blaPDBResultVector[j].getQueryEnd();
+			cout<< " i " << i<< " j "<< j<<endl;
+			cout<<" queryAStart " <<queryAStart<<endl;
+			cout<<" queryAEnd " <<queryAEnd<<endl;
+			cout<<" queryBStart " <<queryBStart<<endl;
+			cout<<" queryBEnd " <<queryBEnd<<endl;
+
+			//find overlapping area
 			if (queryAStart < queryBEnd && queryBStart < queryAEnd) {
-				int arr[4]={queryAStart,queryAEnd,queryBStart,queryBEnd};
-				sort(arr,arr+4);
-				int overlapSize = arr[2] - arr[1] + 1;
-				cout << " i is " << i << " j is " << j << " arr after sort is "
-						<< arr[0] << " " << arr[1] << " " << arr[2] << " "
-						<< arr[3] << endl;
+				int arr[4] = { queryAStart, queryAEnd, queryBStart, queryBEnd };
+				sort(arr, arr + 4);
+				int overlapSize = arr[2] - arr[1] ;
+				cout<<" overlapSize "<<overlapSize<<endl;
 				int temp = 0;
-				for (int m = 0; m < overlapSize; m++) {
-					for (int n = 0; n < overlapSize; n++) {
+
+				for (int m = 0; m < overlapSize/2; m++) {
+					//cout<<" m " << m <<endl;
+					for (int n = 0; n < overlapSize/2; n++) {
+						//cout<<" n " << n ;
 						temp +=
-								(distanceMatrixA[arr[2] - queryAStart + m][arr[2]
+								(distanceMatrixA[arr[1] - queryAStart + m][arr[1]
 										- queryAStart + n]
-										- distanceMatrixB[arr[2] - queryBStart
-												+ m][arr[2] - queryBStart + n])
-										* (distanceMatrixA[arr[2] - queryAStart
-												+ m][arr[2] - queryAStart + n]
-												- distanceMatrixB[arr[2]
-														- queryBStart + m][arr[2]
+										- distanceMatrixB[arr[1] - queryBStart
+												+ m][arr[1] - queryBStart + n])
+										* (distanceMatrixA[arr[1] - queryAStart
+												+ m][arr[1] - queryAStart + n]
+												- distanceMatrixB[arr[1]
+														- queryBStart + m][arr[1]
 														- queryBStart + n]);
+
 					}
+					//cout<<"-----------------------"<<endl;
+
 				}
+
+
 				temp = temp / (overlapSize * overlapSize);
 				similairtyMatrix[i][j] = temp;
+				cout<<" temp "<<temp<<endl;
 
 			} else {
 				similairtyMatrix[i][j] = 0.0;
@@ -735,6 +750,29 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 
 		}
 	}
+
+	//write similarity matrix to files
+
+	string proteinSimilarityMatFilename(outputFileLocation);
+	proteinSimilarityMatFilename += "/";
+	proteinSimilarityMatFilename += rootName;
+	proteinSimilarityMatFilename += "/BLAPDB/similarityMatrix.txt/";
+
+	//ofstream outSimilarityMatFile((char*) proteinSimilarityMatFilename.c_str(),
+	//		ios::out);
+	cout<<"begin printing similarityMatrix"<<endl;
+	for (int i = 0; i < blaPDBResultVector.size(); i++) {
+
+		for (int j = 0; j < blaPDBResultVector.size(); j++) {
+			//outSimilarityMatFile << " " << similairtyMatrix[i][j] << " ";
+			cout<<" " << similairtyMatrix[i][j] << " ";
+		}
+		//outSimilarityMatFile << "\n";
+		cout<<endl;
+	}
+	//outSimilarityMatFile << "\n";
+	//outSimilarityMatFile.close();
+
 }
 
 string BLAPDBImpl::convertInt(int number) {
