@@ -638,21 +638,53 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 		vector<float> Ys = blaPDBResultVector[k].getYCoords();
 		vector<float> Zs = blaPDBResultVector[k].getZCoords();
 		int subjectStart = blaPDBResultVector[k].getSubjectStart();
+		string subject = blaPDBResultVector[k].getSubject();
 		int subjectEnd = blaPDBResultVector[k].getSubjectEnd();
 
-		int theSize = subjectEnd - subjectStart + 1;
+		int theSize = subject.size();
+		cout << "asdasdfasdfdsaf" << theSize << endl;
+		vector<float> extendedXs;
+		extendedXs.resize(theSize);
+		vector<float> extendedYs;
+		extendedYs.resize(theSize);
+		vector<float> extendedZs;
+		extendedZs.resize(theSize);
+
+		int count = 0;
+		for (int i = 0; i < theSize; i++) {
+			if (subject[i] == '-') {
+				extendedXs[i] = 10000;
+				extendedYs[i] = 10000;
+				extendedZs[i] = 10000;
+
+				count++;
+			} else {
+				extendedXs[i] = Xs[i + subjectStart - 1 - count];
+				extendedYs[i] = Ys[i + subjectStart - 1 - count];
+				extendedZs[i] = Zs[i + subjectStart - 1 - count];
+			}
+		}
+
+		for (int i = 0; i < theSize; i++) {
+			cout << " " << extendedXs[i];
+		}
+		cout << endl;
+		for (int i = 0; i < theSize; i++) {
+			cout << " " << extendedYs[i];
+		}
+		cout << endl;
+		for (int i = 0; i < theSize; i++) {
+			cout << " " << extendedZs[i];
+		}
+		cout << endl;
 		vector<vector<float> > distMatrix;
 		distMatrix.resize(theSize);
+		//extended is the subject length from 0 to the length of it
 		for (int i = 0; i < theSize; i++) {
-			distMatrix[i].resize(theSize);
-		}
-		for (int i = 0; i < theSize; i++) {
-			Point A(Xs[i + subjectStart - 1], Ys[i + subjectStart - 1],
-					Zs[i + subjectStart - 1]);
+			Point A(extendedXs[i], extendedYs[i], extendedZs[i]);
 
 			for (int j = 0; j < theSize; j++) {
-				Point B(Xs[j + subjectStart - 1], Ys[j + subjectStart - 1],
-						Zs[j + subjectStart - 1]);
+				Point B(extendedXs[j], extendedYs[j], extendedZs[j]);
 
 				distMatrix[i][j] = findDistance(A, B); // Add an element (column) to the row
 			}
@@ -686,93 +718,90 @@ void BLAPDBImpl::calculateDistanceMatrix() {
 		outDistMatFile << "\n";
 		outDistMatFile.close();
 	}
+	/*
+	 int similaritySize = blaPDBResultVector.size();
 
-	int similaritySize = blaPDBResultVector.size();
+	 vector<vector<float> > similairtyMatrix;
+	 similairtyMatrix.resize(similaritySize);
+	 for (int i = 0; i < similaritySize; i++) {
+	 similairtyMatrix[i].resize(similaritySize);
+	 }
+	 //start finding the similarity matrix
+	 for (int i = 0; i < similaritySize; i++) {
+	 //int i = 1;
+	 //int j = 0;
+	 vector<vector<float> > distanceMatrixA =
+	 blaPDBResultVector[i].getDistMat();
+	 int queryAStart = blaPDBResultVector[i].getQueryStart();
+	 int queryAEnd = blaPDBResultVector[i].getQueryEnd();
+	 for (int j = 0; j < similaritySize; j++) {
+	 vector<vector<float> > distanceMatrixB =
+	 blaPDBResultVector[j].getDistMat();
+	 int queryBStart = blaPDBResultVector[j].getQueryStart();
+	 int queryBEnd = blaPDBResultVector[j].getQueryEnd();
 
-	vector<vector<float> > similairtyMatrix;
-	similairtyMatrix.resize(similaritySize);
-	for (int i = 0; i < similaritySize; i++) {
-		similairtyMatrix[i].resize(similaritySize);
-	}
-	//start finding the similarity matrix
-	for (int i = 0; i < similaritySize; i++) {
-		vector<vector<float> > distanceMatrixA =
-				blaPDBResultVector[i].getDistMat();
-		int queryAStart = blaPDBResultVector[i].getQueryStart();
-		int queryAEnd = blaPDBResultVector[i].getQueryEnd();
-		for (int j = 0; j < similaritySize; j++) {
-			vector<vector<float> > distanceMatrixB =
-					blaPDBResultVector[j].getDistMat();
-			int queryBStart = blaPDBResultVector[j].getQueryStart();
-			int queryBEnd = blaPDBResultVector[j].getQueryEnd();
-			cout<< " i " << i<< " j "<< j<<endl;
-			cout<<" queryAStart " <<queryAStart<<endl;
-			cout<<" queryAEnd " <<queryAEnd<<endl;
-			cout<<" queryBStart " <<queryBStart<<endl;
-			cout<<" queryBEnd " <<queryBEnd<<endl;
+	 //find overlapping area
+	 if (queryAStart == queryBStart && queryAEnd == queryBEnd) {
+	 similairtyMatrix[i][j] = 0.0;
+	 } else if (queryAStart < queryBEnd && queryBStart < queryAEnd) {
+	 int arr[4] = { queryAStart, queryAEnd, queryBStart, queryBEnd };
+	 sort(arr, arr + 4);
+	 int overlapSize = arr[2] - arr[1] + 1;
 
-			//find overlapping area
-			if (queryAStart < queryBEnd && queryBStart < queryAEnd) {
-				int arr[4] = { queryAStart, queryAEnd, queryBStart, queryBEnd };
-				sort(arr, arr + 4);
-				int overlapSize = arr[2] - arr[1] ;
-				cout<<" overlapSize "<<overlapSize<<endl;
-				int temp = 0;
+	 int temp = 0;
 
-				for (int m = 0; m < overlapSize/2; m++) {
-					//cout<<" m " << m <<endl;
-					for (int n = 0; n < overlapSize/2; n++) {
-						//cout<<" n " << n ;
-						temp +=
-								(distanceMatrixA[arr[1] - queryAStart + m][arr[1]
-										- queryAStart + n]
-										- distanceMatrixB[arr[1] - queryBStart
-												+ m][arr[1] - queryBStart + n])
-										* (distanceMatrixA[arr[1] - queryAStart
-												+ m][arr[1] - queryAStart + n]
-												- distanceMatrixB[arr[1]
-														- queryBStart + m][arr[1]
-														- queryBStart + n]);
+	 for (int m = 0; m < overlapSize; m++) {
 
-					}
-					//cout<<"-----------------------"<<endl;
+	 for (int n = 0; n < overlapSize; n++) {
+	 cout << " m " << m << " n " << n << "overlapSize"
+	 << overlapSize << endl;
+	 temp +=
+	 (distanceMatrixA[arr[1] - queryAStart + m][arr[1]
+	 - queryAStart + n]
+	 - distanceMatrixB[arr[1] - queryBStart
+	 + m][arr[1] - queryBStart + n])
+	 * (distanceMatrixA[arr[1] - queryAStart
+	 + m][arr[1] - queryAStart + n]
+	 - distanceMatrixB[arr[1]
+	 - queryBStart + m][arr[1]
+	 - queryBStart + n]);
 
-				}
+	 }
 
+	 }
 
-				temp = temp / (overlapSize * overlapSize);
-				similairtyMatrix[i][j] = temp;
-				cout<<" temp "<<temp<<endl;
+	 temp = temp / (overlapSize * overlapSize);
+	 similairtyMatrix[i][j] = temp;
 
-			} else {
-				similairtyMatrix[i][j] = 0.0;
-			}
+	 } else {
+	 similairtyMatrix[i][j] = 1;
+	 }
 
-		}
-	}
-
+	 }
+	 }
+	 */
 	//write similarity matrix to files
+	/*
+	 string proteinSimilarityMatFilename(outputFileLocation);
+	 proteinSimilarityMatFilename += "/";
+	 proteinSimilarityMatFilename += rootName;
+	 proteinSimilarityMatFilename += "/BLAPDB/similarityMatrix.txt/";
 
-	string proteinSimilarityMatFilename(outputFileLocation);
-	proteinSimilarityMatFilename += "/";
-	proteinSimilarityMatFilename += rootName;
-	proteinSimilarityMatFilename += "/BLAPDB/similarityMatrix.txt/";
+	 //ofstream outSimilarityMatFile((char*) proteinSimilarityMatFilename.c_str(),
+	 //		ios::out);
+	 cout << "begin printing similarityMatrix" << endl;
+	 for (int i = 0; i < blaPDBResultVector.size(); i++) {
 
-	//ofstream outSimilarityMatFile((char*) proteinSimilarityMatFilename.c_str(),
-	//		ios::out);
-	cout<<"begin printing similarityMatrix"<<endl;
-	for (int i = 0; i < blaPDBResultVector.size(); i++) {
-
-		for (int j = 0; j < blaPDBResultVector.size(); j++) {
-			//outSimilarityMatFile << " " << similairtyMatrix[i][j] << " ";
-			cout<<" " << similairtyMatrix[i][j] << " ";
-		}
-		//outSimilarityMatFile << "\n";
-		cout<<endl;
-	}
-	//outSimilarityMatFile << "\n";
-	//outSimilarityMatFile.close();
-
+	 for (int j = 0; j < blaPDBResultVector.size(); j++) {
+	 //outSimilarityMatFile << " " << similairtyMatrix[i][j] << " ";
+	 cout << " " << similairtyMatrix[i][j] << " ";
+	 }
+	 //outSimilarityMatFile << "\n";
+	 cout << endl;
+	 }
+	 //outSimilarityMatFile << "\n";
+	 //outSimilarityMatFile.close();
+	 */
 }
 
 string BLAPDBImpl::convertInt(int number) {
@@ -890,13 +919,13 @@ void BLAPDBImpl::write2PDB() {
 					&& Ys[subjectStart - headMore - 1] != 10000
 					&& Zs[subjectStart - headMore - 1] != 10000) {
 				pdbFile << "ATOM  ";				//record name
-				pdbFile << right << setw(5) << subjectStart - headMore; // atom serial number
-				pdbFile << "  CA  "; //atom name
+				pdbFile << right << setw(5) << subjectStart - headMore;	// atom serial number
+				pdbFile << "  CA  ";				//atom name
 				pdbFile << setw(3)
 						<< convertResidueName(
 								originalProteinSeq[queryStart - headMore - 1]);
 				//pdbFile<<templateSeq[subjectStart - headMore];//for debug
-				pdbFile << right << setw(6) << subjectStart - headMore; // atom serial number
+				pdbFile << right << setw(6) << subjectStart - headMore;	// atom serial number
 				pdbFile << "    ";
 				pdbFile << right << setw(8.3)
 						<< Xs[subjectStart - headMore - 1];
@@ -929,12 +958,12 @@ void BLAPDBImpl::write2PDB() {
 						&& Zs[subjectStart + subjectPos - 2] != 10000) {
 					pdbFile << "ATOM  ";				//record name
 					pdbFile << right << setw(5)
-							<< subjectStart + subjectPos - 1; // atom serial number
-					pdbFile << "  CA  "; //atom name
+							<< subjectStart + subjectPos - 1;// atom serial number
+					pdbFile << "  CA  ";				//atom name
 					pdbFile << setw(3) << convertResidueName(query[j]);
 					//pdbFile<<query[ j - 1]; //for dubug
 					pdbFile << right << setw(6)
-							<< subjectStart + subjectPos - 1; // atom serial number
+							<< subjectStart + subjectPos - 1;// atom serial number
 					pdbFile << "    ";
 					pdbFile << right << setw(8.3)
 							<< Xs[subjectStart + subjectPos - 2];
@@ -956,12 +985,12 @@ void BLAPDBImpl::write2PDB() {
 				if (Xs[subjectEnd + k] != 10000 && Ys[subjectEnd + k] != 10000
 						&& Zs[subjectEnd + k] != 10000) {
 					pdbFile << "ATOM  ";				//record name
-					pdbFile << right << setw(5) << subjectEnd + k; // atom serial number
-					pdbFile << "  CA  "; //atom name
+					pdbFile << right << setw(5) << subjectEnd + k;// atom serial number
+					pdbFile << "  CA  ";				//atom name
 					pdbFile << setw(3)
 							<< convertResidueName(
 									originalProteinSeq[queryEnd + k]);
-					pdbFile << right << setw(6) << subjectEnd + k; // atom serial number
+					pdbFile << right << setw(6) << subjectEnd + k;// atom serial number
 					pdbFile << "    ";
 					pdbFile << right << setw(8.3) << Xs[subjectEnd + k];
 					pdbFile << right << setw(8.3) << Ys[subjectEnd + k];
